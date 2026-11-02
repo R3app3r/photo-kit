@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>photo-kit guide</title>
+<style>
+@page { size: A4; margin: 14mm 13mm; }
+body { font: 10.2pt/1.42 "Segoe UI", Arial, sans-serif; color: #1F2328; }
+h1 { font-size: 21pt; color: #2F3A45; margin: 0 0 2mm; }
+h2 { font-size: 13.5pt; color: #2F3A45; border-bottom: 2px solid #4A6FA5; padding-bottom: 1mm; margin: 7mm 0 2.5mm; page-break-after: avoid; }
+h3 { font-size: 11pt; margin: 4mm 0 1.5mm; color: #2F3A45; }
+.sub { color: #5A6470; margin-bottom: 5mm; }
+table { border-collapse: collapse; width: 100%; margin: 1.5mm 0 3mm; page-break-inside: auto; }
+tr { page-break-inside: avoid; }
+th, td { border: 1px solid #D3D8DE; padding: 1.2mm 1.8mm; vertical-align: top; text-align: left; }
+th { background: #ECEFF3; }
+code, pre { font-family: Consolas, monospace; font-size: 9pt; }
+pre { background: #F4F5F7; border-left: 3px solid #4A6FA5; padding: 2mm 3mm; white-space: pre-wrap; }
+.box { background: #ECEFF3; border-radius: 2mm; padding: 2.5mm 3.5mm; margin: 2mm 0 3mm; }
+ol li, ul li { margin: 0.6mm 0; }
+.small { font-size: 8.8pt; color: #555; }
+</style></head><body>
+
+<h1>photo-kit</h1>
+<div class="sub">Photo pipeline for ads and social posts · deterministic batch processing · reusable for any brand</div>
+
+<div class="box"><b>In one line:</b> put real project photos in a folder, run one command, get straightened and colour-corrected
+photos in every platform size (metadata stripped), a before/after review sheet, and branded post cards. Every decision is
+written to a report, so review and fixes need only small text edits, no image editing.</div>
+
+<h2>1. Where it lives</h2>
+<table>
+<tr><th>Path</th><th>What</th></tr>
+<tr><td><code>~/.claude/skills/photo-kit/SKILL.md</code></td><td>Instructions Claude follows (recommended model: haiku)</td></tr>
+<tr><td><code>…/scripts/photo_kit.py</code></td><td>The tool: <code>process</code>, <code>cards</code>, <code>verify</code></td></tr>
+<tr><td><code>…/scripts/html_to_pdf.py</code></td><td>Helper: prints an HTML page to PDF with Edge/Chrome</td></tr>
+<tr><td><code>…/config.default.json</code></td><td>All defaults (sizes, correction strengths, card layout)</td></tr>
+<tr><td><code>…/GUIDE.html</code></td><td>Source of this guide</td></tr>
+<tr><td>project config JSON</td><td>Brand-specific overrides (logo, fonts, colours, url) — deep-merged with defaults</td></tr>
+<tr><td><code>~/.cache/photo_kit/</code></td><td>Fonts converted from woff2 to ttf (created automatically)</td></tr>
+</table>
+<p class="small">A skill is picked up when a Claude Code session starts. The script itself works from any terminal.</p>
+
+<h2>2. Dependencies</h2>
+<table>
+<tr><th>Package</th><th>Used for</th></tr>
+<tr><td>Python 3.10+</td><td>runs everything</td></tr>
+<tr><td>Pillow</td><td>load/save, colour profiles, resize, unsharp mask, drawing cards</td></tr>
+<tr><td>numpy</td><td>pixel maths (white balance, levels, vibrance)</td></tr>
+<tr><td>opencv-python-headless</td><td>line detection, perspective warp, denoising, Sobel/Laplacian</td></tr>
+<tr><td>fontTools + brotli</td><td>convert web fonts (woff2) to ttf; read font coverage</td></tr>
+<tr><td>Microsoft Edge or Chrome</td><td>only for <code>html_to_pdf.py</code></td></tr>
+</table>
+<pre>python -m pip install pillow numpy opencv-python-headless fonttools brotli</pre>
+
+<h2>3. Use cases</h2>
+<ul>
+<li>Google Ads image assets (1.91:1, 1:1, 4:5) from real job photos (plain — no logos/text/frames).</li>
+<li>Business Profile post photos (4:3), light correction only.</li>
+<li>LinkedIn feed photos (4:5, 1:1, 1.91:1) and branded LinkedIn cards with a headline.</li>
+<li>Straightening phone shots of rooms and furniture (converging verticals) in bulk.</li>
+<li>Cleaning compressed or re-saved JPEGs before publishing.</li>
+<li>Ranking a photo library by sharpness and resolution.</li>
+<li>Any brand: supply a project config with logo, fonts, and colours.</li>
+</ul>
+
+<h2>4. Workflow</h2>
+<ol>
+<li><b>Collect</b> originals into a folder (sub-folders become name prefixes). Prefer original files over chat-app copies.</li>
+<li><b>Process</b>: <code>python photo_kit.py process IN OUT --config &lt;project config&gt;</code></li>
+<li><b>Review text first</b>: console summary, <code>report.json</code>, <code>manifest.csv</code> flags. Then look at <code>_review/before_after_NN.jpg</code>.</li>
+<li><b>Fix by overrides</b>: write <code>OUT/overrides.json</code>, rerun only those photos with <code>--only stem1,stem2</code>.</li>
+<li><b>Cards</b>: write <code>cards.json</code> with approved headlines; <code>python photo_kit.py cards OUT cards.json --config …</code></li>
+<li><b>Verify</b>: <code>python photo_kit.py verify OUT</code> must say <code>clean</code>.</li>
+<li><b>Human audit</b> of every file, then upload.</li>
+</ol>
+
+<h2>5. Commands</h2>
+<table>
+<tr><th>Command</th><th>Arguments</th></tr>
+<tr><td><code>process IN OUT</code></td><td><code>--config</code> project JSON · <code>--overrides</code> per-photo JSON · <code>--only</code> comma-separated stems</td></tr>
+<tr><td><code>cards OUT CARDS.json</code></td><td><code>--config</code>. Reads <code>OUT/&lt;stem&gt;/00_master.png</code></td></tr>
+<tr><td><code>verify OUT</code></td><td>exit code 1 if any file still carries metadata</td></tr>
+<tr><td><code>html_to_pdf.py PAGE.html OUT.pdf</code></td><td><code>--browser</code> path if Edge/Chrome is not found automatically</td></tr>
+</table>
+
+<h2>6. What comes out</h2>
+<table>
+<tr><th>File in <code>OUT/&lt;stem&gt;/</code></th><th>Size</th><th>Destination</th></tr>
+<tr><td><code>00_master.png</code></td><td>long edge ≤ 3000</td><td>corrected master, lossless (source for cards); not for upload</td></tr>
+<tr><td><code>gads-landscape_1200x628.jpg</code></td><td>1.91:1</td><td>Google Ads image asset</td></tr>
+<tr><td><code>gads-square_1200x1200.jpg</code></td><td>1:1</td><td>Google Ads image asset</td></tr>
+<tr><td><code>gads-portrait_960x1200.jpg</code></td><td>4:5</td><td>Google Ads image asset</td></tr>
+<tr><td><code>gbp-post_1200x900.jpg</code></td><td>4:3</td><td>Google Business Profile post</td></tr>
+<tr><td><code>li-portrait_1080x1350.jpg</code></td><td>4:5</td><td>LinkedIn feed</td></tr>
+<tr><td><code>li-square_1200x1200.jpg</code></td><td>1:1</td><td>LinkedIn feed</td></tr>
+<tr><td><code>li-landscape_1200x627.jpg</code></td><td>1.91:1</td><td>LinkedIn feed / link image</td></tr>
+<tr><td><code>card_&lt;id&gt;_&lt;format&gt;_WxH.jpg</code></td><td>see card formats</td><td>branded card</td></tr>
+</table>
+<p>Plus in <code>OUT/</code>: <code>manifest.csv</code>, <code>report.json</code>, <code>_review/before_after_NN.jpg</code>.</p>
+
+<table>
+<tr><th>Flag</th><th>Meaning</th></tr>
+<tr><td><i>(empty)</i></td><td>the crop had at least the output's pixels</td></tr>
+<tr><td><code>UPSCALED x1.0–1.25</code></td><td>slightly enlarged: fine</td></tr>
+<tr><td><code>TOO SMALL xN: replace source</code></td><td>enlarged more than <code>max_upscale</code>: get the original or exclude that size</td></tr>
+</table>
+
+<h2>7. Processing order (per photo)</h2>
+<ol>
+<li>Rotate by Exif, convert any embedded colour profile to sRGB, shrink to <code>master_long_edge</code>.</li>
+<li>Optional manual rotation (override).</li>
+<li><b>Denoise</b>: measure noise, remove JPEG blocks/grain only when present.</li>
+<li><b>Verticals</b>: find near-vertical lines, compute vanishing point, warp, crop, re-measure; revert if not straighter.</li>
+<li><b>White balance</b> from bright near-neutral pixels, gains capped.</li>
+<li><b>Levels</b>: percentile black/white points with a capped stretch, then mild midtone gamma.</li>
+<li><b>Vibrance</b>: boosts low-saturation colours most.</li>
+<li>Per platform: best crop → Lanczos resize → brightness-only sharpening scaled to the resize → JPEG.</li>
+</ol>
+
+<h2>8. Config reference</h2>
+<p>A project config lists only what differs from <code>config.default.json</code> (deep-merged).</p>
+
+<h3>Top level</h3>
+<table>
+<tr><th>Key</th><th>Default</th><th>Meaning</th></tr>
+<tr><td><code>master_long_edge</code></td><td>3000</td><td>masters are shrunk to this</td></tr>
+<tr><td><code>jpeg_quality</code></td><td>95</td><td>exports and cards</td></tr>
+<tr><td><code>max_upscale</code></td><td>1.25</td><td>above this an export is flagged TOO SMALL</td></tr>
+<tr><td><code>platforms[]</code></td><td>7 entries</td><td><code>id</code>, <code>label</code>, <code>w</code>, <code>h</code></td></tr>
+</table>
+
+<h3><code>correction</code> (selected keys)</h3>
+<table>
+<tr><th>Key</th><th>Default</th><th>Meaning</th></tr>
+<tr><td><code>verticals</code></td><td>true</td><td>straighten converging verticals</td></tr>
+<tr><td><code>verticals_strength</code></td><td>0.9</td><td>1 = fully vertical; 0.9 looks more natural</td></tr>
+<tr><td><code>verticals_max_deg</code></td><td>13</td><td>refuse corrections that need more</td></tr>
+<tr><td><code>wb_strength</code></td><td>0.8</td><td>how much of the measured cast to remove</td></tr>
+<tr><td><code>vibrance</code></td><td>0.15</td><td>0 = off; higher values boost low-saturation colours</td></tr>
+<tr><td><code>sharpen</code></td><td>radius 0.9, percent 80, threshold 3</td><td>scaled by resize factor</td></tr>
+</table>
+
+<h3><code>brand</code></h3>
+<table>
+<tr><th>Key</th><th>Meaning</th></tr>
+<tr><td><code>logo</code></td><td>PNG with transparency (recoloured automatically)</td></tr>
+<tr><td><code>font</code></td><td>one path or a list of subset files</td></tr>
+<tr><td><code>swatch</code> / <code>swatch_fade</code></td><td>optional material photo as card background</td></tr>
+<tr><td><code>primary</code> / <code>on_primary</code></td><td>band colour / text and logo on it</td></tr>
+<tr><td><code>accent</code> / <code>accent_light</code></td><td>thin rule / subline colour</td></tr>
+<tr><td><code>background</code></td><td>card frame colour</td></tr>
+<tr><td><code>url</code></td><td>default subline</td></tr>
+</table>
+
+<h2>9. Per-photo overrides (<code>OUT/overrides.json</code>)</h2>
+<pre>{ "photo-stem": {"exclude": ["gads-square"]},
+  "another": {"verticals": false},
+  "third": {"focus": [0.5, 0.35]},
+  "fourth": {"correction": {"verticals_max_deg": 15}, "vibrance": 0.08} }</pre>
+<table>
+<tr><th>Key</th><th>Effect</th></tr>
+<tr><td><code>skip</code></td><td>true: ignore this photo</td></tr>
+<tr><td><code>exclude</code></td><td>list of platform ids not to export</td></tr>
+<tr><td><code>focus</code></td><td>[x, y] 0–1 of the master: crops centre on it</td></tr>
+<tr><td><code>rotate</code></td><td>degrees, + = clockwise</td></tr>
+<tr><td><code>verticals</code></td><td>false: no straightening</td></tr>
+<tr><td><code>wb</code></td><td>false: no white balance</td></tr>
+<tr><td><code>vibrance</code></td><td>number replacing the default</td></tr>
+<tr><td><code>correction</code></td><td>any key of <code>correction</code> for this photo only</td></tr>
+</table>
+
+<h2>10. Cards (<code>cards.json</code>)</h2>
+<pre>[ {"id": "example", "source": "photo-stem",
+   "headline": "Approved headline here",
+   "subline": "example.com",
+   "formats": ["li-portrait-card", "li-square-card"], "fit": "whole"} ]</pre>
+<table>
+<tr><th>Key</th><th>Meaning</th></tr>
+<tr><td><code>id</code></td><td>part of the file name</td></tr>
+<tr><td><code>source</code></td><td>a stem from <code>process</code></td></tr>
+<tr><td><code>headline</code></td><td>approved copy only; ~45 characters max</td></tr>
+<tr><td><code>subline</code></td><td>small line under it (default: brand url)</td></tr>
+<tr><td><code>formats</code></td><td>card formats to render</td></tr>
+<tr><td><code>fit</code></td><td><code>"whole"</code>: show the entire photo</td></tr>
+<tr><td><code>focus</code></td><td>[x, y]: steer the crop</td></tr>
+</table>
+
+<h2>11. Rules that never change</h2>
+<ul>
+<li>Google Ads images: plain exports only (no logo, text, frame, border).</li>
+<li>Business Profile: light correction only; plain export by default.</li>
+<li>Never change the product: no recolouring, no added texture, no defect removal, no AI fill. Cropping clutter is fine.</li>
+<li>Only the organisation’s own photos; no client faces or house numbers; nothing with a third-party photographer credit.</li>
+<li>Card headlines only from approved copy. Originals are never overwritten.</li>
+</ul>
+
+<p class="small">Author: Marton Rozsas · marton.rozsas@gmail.com</p>
+
+</body></html>

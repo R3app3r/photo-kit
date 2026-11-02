@@ -1,0 +1,117 @@
+{
+  "_doc": "Defaults for photo_kit.py. A project config only lists what differs (deep-merged). Platform sizes as of 2026-10; check the upload screens if a platform changes them.",
+  "master_long_edge": 3000,
+  "jpeg_quality": 95,
+  "max_upscale": 1.25,
+  "platforms": [
+    {
+      "id": "gads-landscape",
+      "label": "Google Ads image 1.91:1",
+      "w": 1200,
+      "h": 628
+    },
+    {
+      "id": "gads-square",
+      "label": "Google Ads image 1:1",
+      "w": 1200,
+      "h": 1200
+    },
+    {
+      "id": "gads-portrait",
+      "label": "Google Ads image 4:5",
+      "w": 960,
+      "h": 1200
+    },
+    {
+      "id": "gbp-post",
+      "label": "Business Profile post 4:3",
+      "w": 1200,
+      "h": 900
+    },
+    {
+      "id": "li-portrait",
+      "label": "LinkedIn feed 4:5",
+      "w": 1080,
+      "h": 1350
+    },
+    {
+      "id": "li-square",
+      "label": "LinkedIn feed 1:1",
+      "w": 1200,
+      "h": 1200
+    },
+    {
+      "id": "li-landscape",
+      "label": "LinkedIn feed / link 1.91:1",
+      "w": 1200,
+      "h": 627
+    }
+  ],
+  "correction": {
+    "verticals": true,
+    "verticals_strength": 0.9,
+    "verticals_max_deg": 13,
+    "verticals_search_deg": 20,
+    "verticals_min_line": 0.12,
+    "verticals_min_lines": 4,
+    "wb_strength": 0.8,
+    "wb_max_gain": 0.12,
+    "wb_max_chroma": 0.1,
+    "wb_min_share": 0.02,
+    "wb_luma_from_pct": 55,
+    "levels_clip_low": 0.3,
+    "levels_clip_high": 99.7,
+    "levels_max_black": 0.12,
+    "levels_min_white": 0.8,
+    "levels_max_scale": 1.35,
+    "levels_target_median": 0.5,
+    "levels_gamma_range": [0.85, 1.15],
+    "vibrance": 0.15,
+    "clarity": 0,
+    "sharpen": {
+      "radius": 0.9,
+      "percent": 80,
+      "threshold": 3
+    },
+    "denoise_k": 0.9,
+    "denoise_max": 5
+  },
+  "brand": {
+    "logo": null,
+    "font": null,
+    "swatch": null,
+    "swatch_fade": 0.35,
+    "primary": "#333333",
+    "on_primary": "#FFFFFF",
+    "accent": "#4A6FA5",
+    "accent_light": "#E6ECF3",
+    "background": "#F2F2F0",
+    "url": ""
+  },
+  "card_formats": {
+    "li-portrait-card": {
+      "w": 1080,
+      "h": 1350,
+      "margin": 0.06,
+      "band": 0.16,
+      "logo": 0.34,
+      "text": 0.2
+    },
+    "li-square-card": {
+      "w": 1200,
+      "h": 1200,
+      "margin": 0.055,
+      "band": 0.17,
+      "logo": 0.34,
+      "text": 0.19
+    },
+    "gbp-card": {
+      "w": 1200,
+      "h": 900,
+      "margin": 0.045,
+      "band": 0,
+      "logo": 0,
+      "text": 0
+    }
+  }
+}
