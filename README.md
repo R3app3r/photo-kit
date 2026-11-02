@@ -12,6 +12,16 @@ Deterministic batch photo pipeline for marketing assets. One command produces pl
 ## Main description
 A Claude skill that wraps a deterministic Python script (`photo_kit.py`) for preparing real project photos for Google Ads, Google Business Profile, and LinkedIn. It handles colour correction, straightening of converging verticals, export to multiple platform sizes, metadata stripping, before/after review sheets, and optional branded post cards. All pixel decisions stay in the script; the model only reviews text reports and writes small JSON overrides.
 
+## Example
+The review sheet `process` writes for two casual phone photos (3264×2448, used as shot), with the settings in [examples/project-config.json](examples/project-config.json):
+
+![Before/after review sheet for two phone photos](examples/before_after.jpg)
+
+- **Top:** shadows deepened, the slight yellow cast removed, greens cleaner, phone noise reduced.
+- **Bottom:** fog and snow fooled the automatic white balance, which shifted the scene slightly pink. This is what the review step is for: one line in [examples/overrides.json](examples/overrides.json) (`{"raw": {"wb": false}}`) and a rerun with `--only raw` keeps the cool tones and only corrects brightness and contrast.
+
+The notes under each pair are the decisions written to `report.json`. [examples/cards.json](examples/cards.json) shows the card input used for the same run.
+
 ## Use cases
 - Preparing Google Ads image assets (1.91:1, 1:1, 4:5) from real job photos.
 - Creating Google Business Profile post images (4:3) with light correction.

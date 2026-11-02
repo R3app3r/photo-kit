@@ -1,0 +1,4 @@
+{
+  "correction": {"vibrance": 0.25, "clarity": 0.3, "wb_strength": 0.9, "verticals_strength": 1.0},
+  "brand": {"primary": "#1F3A4D", "on_primary": "#FFFFFF", "accent": "#E07A3F", "accent_light": "#F6D7C3", "background": "#EEF1F4", "url": "example.com"}
+}

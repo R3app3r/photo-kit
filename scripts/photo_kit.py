@@ -425,7 +425,8 @@ def before_after_sheets(items, out, cfg, prefix=""):
             f.draw(d, (pad, y), f"{it['stem']}   BEFORE  |  AFTER", "#222")
             sheet.paste(b, (pad, y + 34)); sheet.paste(aimg, (pad * 2 + b.width, y + 34))
             notes = " · ".join(f"{k}: {v}" for k, v in it["log"].items() if k in ("verticals", "wb", "levels"))
-            fs.draw(d, (pad, y + 40 + H), notes[:230], "#555")
+            for i, ln in enumerate(wrap(d, notes, fs, width - pad * 2)[:3]):
+                fs.draw(d, (pad, y + 40 + H + i * 22), ln, "#555")
             y += H + 110
         p = out / "_review" / f"{prefix}before_after_{n:02d}.jpg"
         save_jpeg(sheet, p, 85)
