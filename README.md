@@ -2,8 +2,11 @@
 
 Deterministic batch photo pipeline for marketing assets. One command produces platform-sized, metadata-free images, a review sheet, and optional branded cards. The model only reads reports and writes small JSON overrides.
 
+> [!TIP]
 > **Built to be cheap to run, for everyday use.**
+>
 > All pixel work is done by a plain Python script, not by the model. Claude only runs commands, reads short text reports and writes small JSON files, so the skill runs well on a small, inexpensive model (`haiku`) and uses few tokens: no images are generated, and review sheets are read once, after the text reports.
+>
 > It is a practical everyday helper for small businesses and personal projects, not a replacement for professional photo-editing software or a retoucher. Always check the results before you publish them.
 
 ## Main description
@@ -29,11 +32,25 @@ A Claude skill that wraps a deterministic Python script (`photo_kit.py`) for pre
 - Card headlines must come only from approved copy.
 
 ## Installation
-1. Place this folder at `~/.claude/skills/photo-kit/` (or the equivalent skills directory).
-2. Install dependencies (Python 3.10+): `pip install -r requirements.txt`.
-3. Optional: Microsoft Edge or Chrome, only for `scripts/html_to_pdf.py` (turns `GUIDE.html` into a PDF).
+Clone into your Claude skills folder and install the dependencies (Python 3.10+):
 
-The script lives in `scripts/photo_kit.py` and the defaults in `config.default.json`. Everything the skill needs is in this folder; no network access or API keys are used. `GUIDE.html` is the full reference (commands, config keys, overrides, card format).
+```bash
+git clone https://github.com/R3app3r/photo-kit ~/.claude/skills/photo-kit
+pip install -r ~/.claude/skills/photo-kit/requirements.txt
+```
+
+The skill is picked up when the next Claude Code session starts. Everything it needs is in this folder; no network access or API keys are used.
+
+## Quick start
+In Claude Code, ask for example: *"Use photo-kit to prepare the photos in ./shoot for Google Ads and LinkedIn."*  
+Or run the script yourself:
+
+```bash
+python ~/.claude/skills/photo-kit/scripts/photo_kit.py process ./shoot ./shoot-out
+python ~/.claude/skills/photo-kit/scripts/photo_kit.py verify ./shoot-out
+```
+
+Add `--config my-brand.json` (logo, fonts, colours, url) for branded cards. [GUIDE.md](GUIDE.md) is the full reference: commands, config keys, overrides and card format.
 
 ## Author
 Marton Rozsas · marton.rozsas@gmail.com  
